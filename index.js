@@ -96,9 +96,7 @@ app.post('/api/persons', (request, response) => {
 
     else {
         const newPerson = request.body
-        const id = Math.floor(Math.random() * 1000)
-        newPerson.id = String(id)
-
+        
         data = data.concat(newPerson)
         response.json(newPerson)
     }
