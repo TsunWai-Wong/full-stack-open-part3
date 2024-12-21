@@ -13,7 +13,7 @@ app.use(express.static('dist'))
 // Define a Custom Token
 morgan.token('response-body', (req, res) => {
     return res.locals.body || '' // Log response body if available
-});
+})
 
 app.use((req, res, next) => {
     // Save Original res.json Method
@@ -23,46 +23,27 @@ app.use((req, res, next) => {
         // Store the Response Body
         res.locals.body = JSON.stringify(body)
         // Call the original `res.json`
-        return originalJson.call(this, body) 
-    };
+        return originalJson.call(this, body)
+    }
     // Continue to the Next Middleware
-    next();
-});
+    next()
+})
 
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :response-body'))
 
-
-let data = [
-    { 
-      "id": "1",
-      "name": "Arto Hellas", 
-      "number": "040-123456"
-    },
-    { 
-      "id": "2",
-      "name": "Ada Lovelace", 
-      "number": "39-44-5323523"
-    },
-    { 
-      "id": "3",
-      "name": "Dan Abramov", 
-      "number": "12-43-234345"
-    },
-    { 
-      "id": "4",
-      "name": "Mary Poppendieck", 
-      "number": "39-23-6423122"
-    }
-]
-
 app.get('/info', (request, response) => {
-    response.send(`<div>
-        <p>Phonebook has info for ${data.length} people</p>
-        <p>${new Date()}</p>
-    </div>`)
+    Person.find({})
+        .then(people => {
+            const length = people.length
+            response.send(`<div>
+                <p>Phonebook has info for ${length} people</p>
+                <p>${new Date()}</p>
+            </div>`)
+        })
+        .catch(error => next(error))
 })
 
-app.get('/api/persons', (request, response) => {
+app.get('/api/persons', (request, response, next) => {
     Person.find({})
         .then(people => {
             response.json(people)
@@ -78,7 +59,7 @@ app.get('/api/persons/:id', (request, response, next) => {
             response.json(result)
         })
         .catch(error => next(error))
-    }   
+}
 )
 
 app.delete('/api/persons/:id', (request, response, next) => {
@@ -86,11 +67,11 @@ app.delete('/api/persons/:id', (request, response, next) => {
     console.log(`id is ${id}`)
 
     Person.findByIdAndDelete(id)
-        .then(     
-            result => 
-                {
-                    console.log('delete')
-                    response.status(204).end()}   
+        .then(
+            result => {
+                console.log('delete')
+                response.status(204).end()
+            }
         )
         .catch(error => next(error))
 })
@@ -103,20 +84,20 @@ app.post('/api/persons', (request, response, next) => {
     }
 
     else {
-        person = new Person({
+        const person = new Person({
             name: request.body.name,
             number: request.body.number
         })
-        
+
         person.save()
-        .then(savedPerson => {
-            console.log(savedPerson)
-            response.json(savedPerson)
-        })
-        .catch(error => next(error)
-        )
+            .then(savedPerson => {
+                console.log(savedPerson)
+                response.json(savedPerson)
+            })
+            .catch(error => next(error)
+            )
     }
-    }
+}
 )
 
 app.put('/api/persons/:id', (request, response, next) => {
@@ -132,7 +113,7 @@ app.put('/api/persons/:id', (request, response, next) => {
             name: request.body.name,
             number: request.body.number
         }
-        
+
         Person.findByIdAndUpdate(id, newPerson)
             .then(updatedPerson => {
                 response.json(updatedPerson)
@@ -152,10 +133,10 @@ const errorHandler = (error, request, response, next) => {
     console.error('error handler is reached')
 
     if (error.name === 'CastError') {
-        return response.status(400).send({error: 'malformatted id'})
+        return response.status(400).send({ error: 'malformatted id' })
     }
-    else if (error.name === 'ValidationError'){
-        return response.status(400).send({error: error.message})
+    else if (error.name === 'ValidationError') {
+        return response.status(400).send({ error: error.message })
     }
 
     next(error)
